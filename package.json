@@ -1,0 +1,9 @@
+{
+  "name": "apps-script-examination-form",
+  "version": "1.0.0",
+  "description": "Google Apps Script project for creating staff examination duty form",
+  "scripts": {
+    "test": "node --test"
+  },
+  "type": "commonjs"
+}
