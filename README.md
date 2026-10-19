@@ -1,45 +1,64 @@
-# Staff Examination Duty Form (Google Apps Script)
+# Student Management System (Google Apps Script)
 
-This project contains Google Apps Script code to automatically create a Google Form for collecting staff examination duty details.
-
-## Fields Collected
-1. Employee Name
-2. Designation
-3. Current Workplace
-4. Telephone Number
-5. Preferred Location for Performing Examination Duties
+This project is a Google Apps Script project converted from VBA UserForms. It provides a full **Home Page Access Tab** and web-based interface for managing student transcripts, exam results, and medium of instruction letters in Google Sheets.
 
 ---
 
-## How to Run in Google Apps Script Editor
+## Features & Modules
 
-### Option 1: Copy Code Directly to Google Apps Script Editor
-1. Go to [script.google.com](https://script.google.com/) and click **New project**.
-2. Replace the contents of `Code.gs` with the code in `Code.gs` from this project.
-3. Click the **Save** icon (or press `Ctrl+S` / `Cmd+S`).
-4. At the top editor bar, select the function **`createStaffExaminationForm`** from the dropdown menu.
-5. Click **Run**.
-6. When running for the first time, Google Apps Script will request permissions to manage your Google Forms:
-   - Click **Review permissions**.
-   - Choose your Google account.
-   - Click **Advanced** > **Go to Untitled project (unsafe)** (or your project name).
-   - Click **Allow**.
-7. View the **Execution log** at the bottom of the Apps Script editor to find the generated Form Edit URL and Form Published URL.
+### 1. Home Page Access Tab
+- Navigation dashboard offering single-click access to all user forms and sheet setups.
+- Can be launched via the Spreadsheet Custom Menu (**Student Management > Home Page Access Tab**) or accessed as a Web App (`doGet`).
+
+### 2. Transcript / Student Entry Form
+- Fields: Full Name, NIC Number, Batch Number, NTS (Nursing Training School dropdown), Date.
+- Automatic text formatting: ProperCase for Full Name, Uppercase for NIC and Batch Number.
+- NIC Format Validation:
+  - New NIC: Exactly 12 digits.
+  - Old NIC: 11 characters (e.g. `912345678 V`).
+- Duplicate NIC check against column B of the `Transcript` sheet.
+
+### 3. Exam Results Entry Form
+- Fields: Title, Full Name, Index Number, NIC Number, Batch Number, NTS, His/Her, From Date, To Date, Paper I, Paper II, Paper III, Paper IV, Paper V (conditional), Practical, Date.
+- Automatic student lookup by NIC from the `Transcript` sheet to auto-fill Full Name, Batch Number, and NTS.
+- Dynamic conditional field: Enables **Paper V** if Batch Number year is $\ge 2018$.
+- Saves records to the `Exam_Results` sheet.
+
+### 4. Medium Letter Entry Form
+- Fields: NIC Number, Title, Full Name, Batch Number, NTS, From Date, To Date, Date.
+- Automatic student lookup by NIC from the `Transcript` sheet.
+- Saves records to the `Medium_Letter` sheet.
 
 ---
 
-### Option 2: Using `clasp` (Command Line)
-If you use Google Apps Script Command Line Tool (`clasp`):
-1. Install clasp: `npm install -g @google/clasp`
-2. Log in to your Google account: `clasp login`
-3. Push files to your project: `clasp push`
-4. Open the editor: `clasp open` and run `createStaffExaminationForm`.
+## Sheets Structure
+
+When running **Student Management > Setup Sheets & Headers**:
+- **`Home`**: Overview sheet with system module descriptions and links.
+- **`Transcript`**: Stores registered student details (`[Full Name, NIC Number, Batch Number, NTS, Date]`).
+- **`Exam_Results`**: Stores examination paper results (`[Title, Full Name, Index Number, NIC, Batch Number, NTS, His/Her, From Date, To Date, Paper I, Paper II, Paper III, Paper IV, Paper V, Practical, Date]`).
+- **`Medium_Letter`**: Stores medium of instruction letter records (`[Title, Full Name, NIC, Batch Number, NTS, From Date, To Date, Date]`).
+
+---
+
+## How to Set Up in Google Apps Script
+
+### Option 1: Copying Code to Google Sheets Apps Script Editor
+1. Open your Google Sheet.
+2. Click **Extensions** > **Apps Script**.
+3. Replace the contents of `Code.gs` with the code in `Code.gs`.
+4. Create an HTML file named `Index.html` and paste the contents of `Index.html`.
+5. Save the project (`Ctrl+S` / `Cmd+S`).
+6. Refresh your Google Sheet. A new menu named **Student Management** will appear on the menu bar.
+7. Click **Student Management** > **Setup Sheets & Headers** to create all target sheets.
+8. Click **Student Management** > **Home Page Access Tab** to launch the interface.
 
 ---
 
 ## Running Unit Tests Locally
 
-To run unit tests locally:
+To run the Node.js native unit tests locally:
+
 ```bash
 npm test
 ```
