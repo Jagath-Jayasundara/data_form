@@ -138,6 +138,22 @@ global.HtmlService = {
 
 const appScript = require('../Code.gs');
 
+test('authenticateUser validates credentials correctly', () => {
+  // Valid
+  let res = appScript.authenticateUser('admin', 'admin123');
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.username, 'admin');
+
+  // Invalid
+  res = appScript.authenticateUser('admin', 'wrongpass');
+  assert.strictEqual(res.success, false);
+  assert.strictEqual(res.message, 'Invalid Username or Password.');
+
+  // Empty
+  res = appScript.authenticateUser('', '');
+  assert.strictEqual(res.success, false);
+});
+
 test('properCase capitalizes words correctly', () => {
   assert.strictEqual(appScript.properCase('john doe'), 'John Doe');
   assert.strictEqual(appScript.properCase('  saman PERERA '), 'Saman Perera');

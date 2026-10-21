@@ -4,6 +4,16 @@ This project is a Google Apps Script project converted from VBA UserForms. It pr
 
 ---
 
+## Authentication & Login
+
+The system features a built-in login form to secure access to student forms and records:
+- **Default Username**: `admin`
+- **Default Password**: `admin123`
+
+When launched, users must authenticate before accessing the Home Page Access Tab or entry forms. A **Logout** button is provided in the upper header panel.
+
+---
+
 ## Features & Modules
 
 ### 1. Home Page Access Tab
@@ -20,6 +30,7 @@ This project is a Google Apps Script project converted from VBA UserForms. It pr
 
 ### 3. Exam Results Entry Form
 - Fields: Title, Full Name, Index Number, NIC Number, Batch Number, NTS, His/Her, From Date, To Date, Paper I, Paper II, Paper III, Paper IV, Paper V (conditional), Practical, Date.
+- Results section arranged cleanly in 2 rows (Row 1: Paper I, II, III; Row 2: Paper IV, V, Practical).
 - Automatic student lookup by NIC from the `Transcript` sheet to auto-fill Full Name, Batch Number, and NTS.
 - Dynamic conditional field: Enables **Paper V** if Batch Number year is $\ge 2018$.
 - Saves records to the `Exam_Results` sheet.

@@ -1,4 +1,27 @@
 /**
+ * Authenticates user credentials for accessing the Student Management System.
+ * Default credentials: username "admin", password "admin123".
+ * @param {string} username - User username.
+ * @param {string} password - User password.
+ * @return {{success: boolean, username?: string, message?: string}}
+ */
+function authenticateUser(username, password) {
+  if (!username || !password) {
+    return { success: false, message: 'Please enter both Username and Password.' };
+  }
+
+  const u = String(username).trim();
+  const p = String(password).trim();
+
+  // Valid credentials
+  if (u === 'admin' && p === 'admin123') {
+    return { success: true, username: u };
+  } else {
+    return { success: false, message: 'Invalid Username or Password.' };
+  }
+}
+
+/**
  * Capitalizes the first letter of each word in a string.
  * @param {string} str - The string to convert.
  * @return {string} The string in Proper Case.
@@ -378,6 +401,7 @@ function onOpen() {
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
+    authenticateUser,
     properCase,
     validateNIC,
     getNTSList,
