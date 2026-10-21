@@ -13,7 +13,6 @@ function authenticateUser(username, password) {
   const u = String(username).trim();
   const p = String(password).trim();
 
-  // Valid credentials
   if (u === 'admin' && p === 'admin123') {
     return { success: true, username: u };
   } else {
@@ -50,7 +49,6 @@ function validateNIC(nic) {
   }
   const trimmed = String(nic).trim();
 
-  // Check if fully numeric
   if (/^\d+$/.test(trimmed)) {
     if (trimmed.length !== 12) {
       return { valid: false, message: 'New NIC number must contain exactly 12 digits.' };
@@ -223,6 +221,90 @@ function lookupStudentByNic(nic) {
 }
 
 /**
+ * Retrieves an existing record for editing from the specified sheet.
+ * @param {string} sheetName - "Transcript", "Exam_Results", or "Medium_Letter".
+ * @param {string} searchKey - NIC number or Index number to search.
+ * @return {{found: boolean, record?: Object, message?: string}}
+ */
+function getRecordForEdit(sheetName, searchKey) {
+  if (!searchKey || !String(searchKey).trim()) {
+    return { found: false, message: 'Please enter a search key (NIC/Index Number).' };
+  }
+
+  const key = String(searchKey).trim().toUpperCase();
+  const sheet = getOrCreateSheet(sheetName);
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) {
+    return { found: false, message: 'Record not found in ' + sheetName };
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    let match = false;
+
+    if (sheetName === 'Transcript') {
+      // Col 2 is NIC Number
+      if (String(row[1]).trim().toUpperCase() === key) match = true;
+    } else if (sheetName === 'Exam_Results') {
+      // Col 3 is Index Number, Col 4 is NIC Number
+      if (String(row[2]).trim().toUpperCase() === key || String(row[3]).trim().toUpperCase() === key) match = true;
+    } else if (sheetName === 'Medium_Letter') {
+      // Col 3 is NIC Number
+      if (String(row[2]).trim().toUpperCase() === key) match = true;
+    }
+
+    if (match) {
+      let record = {};
+      if (sheetName === 'Transcript') {
+        record = {
+          fullName: row[0],
+          nicNumber: row[1],
+          batchNumber: row[2],
+          nts: row[3],
+          date: row[4]
+        };
+      } else if (sheetName === 'Exam_Results') {
+        record = {
+          title: row[0],
+          fullName: row[1],
+          indexNumber: row[2],
+          nic: row[3],
+          batchNumber: row[4],
+          nts: row[5],
+          hisHer: row[6],
+          fromDate: row[7],
+          toDate: row[8],
+          paper1: row[9],
+          paper2: row[10],
+          paper3: row[11],
+          paper4: row[12],
+          paper5: row[13],
+          practical: row[14],
+          date: row[15]
+        };
+      } else if (sheetName === 'Medium_Letter') {
+        record = {
+          title: row[0],
+          fullName: row[1],
+          nic: row[2],
+          batchNo: row[3],
+          nts: row[4],
+          fromDate: row[5],
+          toDate: row[6],
+          date: row[7]
+        };
+      }
+      return { found: true, record: record, rowIndex: i + 2 };
+    }
+  }
+
+  return { found: false, message: 'Record not found in ' + sheetName };
+}
+
+/**
  * Saves transcript / student entry data.
  * @param {Object} data - Transcript data.
  * @return {{success: boolean, message: string}}
@@ -265,6 +347,47 @@ function saveTranscript(data) {
 
   sheet.appendRow([fullName, nicNumber, batchNumber, nts, date]);
   return { success: true, message: 'Data saved successfully!' };
+}
+
+/**
+ * Updates an existing transcript record.
+ * @param {Object} data - Updated transcript data.
+ * @return {{success: boolean, message: string}}
+ */
+function updateTranscript(data) {
+  if (!data) return { success: false, message: 'Please fill all text fields' };
+
+  let fullName = data.fullName ? String(data.fullName).trim() : '';
+  let nicNumber = data.nicNumber ? String(data.nicNumber).trim() : '';
+  let batchNumber = data.batchNumber ? String(data.batchNumber).trim() : '';
+  let nts = data.nts ? String(data.nts).trim() : '';
+  let date = data.date ? String(data.date).trim() : '';
+
+  if (!fullName || !nicNumber || !batchNumber || !nts || !date) {
+    return { success: false, message: 'Please fill all text fields' };
+  }
+
+  fullName = properCase(fullName);
+  nicNumber = nicNumber.toUpperCase();
+  batchNumber = batchNumber.toUpperCase();
+
+  const nicValidation = validateNIC(nicNumber);
+  if (!nicValidation.valid) return { success: false, message: nicValidation.message };
+
+  const sheet = getOrCreateSheet('Transcript');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) return { success: false, message: 'Record not found to update.' };
+
+  const dataVals = sheet.getRange(2, 1, lastRow - 1, 5).getValues();
+  for (let i = 0; i < dataVals.length; i++) {
+    if (String(dataVals[i][1]).trim().toUpperCase() === nicNumber) {
+      sheet.getRange(i + 2, 1, 1, 5).setValues([[fullName, nicNumber, batchNumber, nts, date]]);
+      return { success: true, message: 'Transcript record updated successfully!' };
+    }
+  }
+
+  return { success: false, message: 'Student NIC not found in Transcript sheet.' };
 }
 
 /**
@@ -313,6 +436,65 @@ function saveExamResults(data) {
 }
 
 /**
+ * Updates an existing exam results record.
+ * @param {Object} data - Updated exam results data.
+ * @return {{success: boolean, message: string}}
+ */
+function updateExamResults(data) {
+  if (!data) return { success: false, message: 'Please fill all text fields' };
+
+  const fields = [
+    'title', 'fullName', 'indexNumber', 'nic', 'batchNumber',
+    'nts', 'hisHer', 'fromDate', 'toDate',
+    'paper1', 'paper2', 'paper3', 'paper4', 'practical', 'date'
+  ];
+
+  for (let field of fields) {
+    if (!data[field] || !String(data[field]).trim()) {
+      return { success: false, message: 'Please fill all text fields' };
+    }
+  }
+
+  const sheet = getOrCreateSheet('Exam_Results');
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return { success: false, message: 'Record not found to update.' };
+
+  const targetNic = String(data.nic).trim().toUpperCase();
+  const targetIndex = String(data.indexNumber).trim().toUpperCase();
+  const dataVals = sheet.getRange(2, 1, lastRow - 1, 16).getValues();
+
+  for (let i = 0; i < dataVals.length; i++) {
+    const rowNic = String(dataVals[i][3]).trim().toUpperCase();
+    const rowIndex = String(dataVals[i][2]).trim().toUpperCase();
+
+    if (rowNic === targetNic || rowIndex === targetIndex) {
+      const updatedRow = [
+        data.title,
+        data.fullName,
+        data.indexNumber,
+        data.nic,
+        data.batchNumber,
+        data.nts,
+        data.hisHer,
+        data.fromDate,
+        data.toDate,
+        data.paper1,
+        data.paper2,
+        data.paper3,
+        data.paper4,
+        data.paper5 || '',
+        data.practical,
+        data.date
+      ];
+      sheet.getRange(i + 2, 1, 1, updatedRow.length).setValues([updatedRow]);
+      return { success: true, message: 'Exam results record updated successfully!' };
+    }
+  }
+
+  return { success: false, message: 'Exam record not found to update.' };
+}
+
+/**
  * Saves medium letter data.
  * @param {Object} data - Medium letter data.
  * @return {{success: boolean, message: string}}
@@ -342,6 +524,49 @@ function saveMediumLetter(data) {
   ]);
 
   return { success: true, message: 'Data saved successfully!' };
+}
+
+/**
+ * Updates an existing medium letter record.
+ * @param {Object} data - Updated medium letter data.
+ * @return {{success: boolean, message: string}}
+ */
+function updateMediumLetter(data) {
+  if (!data) return { success: false, message: 'Please fill all text fields' };
+
+  const fields = ['nic', 'title', 'fullName', 'batchNo', 'nts', 'fromDate', 'toDate', 'date'];
+  for (let field of fields) {
+    if (!data[field] || !String(data[field]).trim()) {
+      return { success: false, message: 'Please fill all text fields' };
+    }
+  }
+
+  const sheet = getOrCreateSheet('Medium_Letter');
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return { success: false, message: 'Record not found to update.' };
+
+  const targetNic = String(data.nic).trim().toUpperCase();
+  const dataVals = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
+
+  for (let i = 0; i < dataVals.length; i++) {
+    const rowNic = String(dataVals[i][2]).trim().toUpperCase();
+    if (rowNic === targetNic) {
+      const updatedRow = [
+        data.title,
+        data.fullName,
+        data.nic,
+        data.batchNo,
+        data.nts,
+        data.fromDate,
+        data.toDate,
+        data.date
+      ];
+      sheet.getRange(i + 2, 1, 1, updatedRow.length).setValues([updatedRow]);
+      return { success: true, message: 'Medium letter record updated successfully!' };
+    }
+  }
+
+  return { success: false, message: 'Medium letter record not found to update.' };
 }
 
 /**
@@ -408,9 +633,13 @@ if (typeof module !== 'undefined' && module.exports) {
     getTitleList,
     getHisHerList,
     lookupStudentByNic,
+    getRecordForEdit,
     saveTranscript,
+    updateTranscript,
     saveExamResults,
+    updateExamResults,
     saveMediumLetter,
+    updateMediumLetter,
     setupSpreadsheet,
     doGet,
     showHomePage,

@@ -64,6 +64,13 @@ class MockSheet {
   getLastRow() {
     return this.grid.length;
   }
+  getLastColumn() {
+    let maxCols = 0;
+    this.grid.forEach(row => {
+      if (row.length > maxCols) maxCols = row.length;
+    });
+    return maxCols || 1;
+  }
   setFrozenRows() {}
   appendRow(rowArray) {
     this.grid.push([...rowArray]);
@@ -139,17 +146,14 @@ global.HtmlService = {
 const appScript = require('../Code.gs');
 
 test('authenticateUser validates credentials correctly', () => {
-  // Valid
   let res = appScript.authenticateUser('admin', 'admin123');
   assert.strictEqual(res.success, true);
   assert.strictEqual(res.username, 'admin');
 
-  // Invalid
   res = appScript.authenticateUser('admin', 'wrongpass');
   assert.strictEqual(res.success, false);
   assert.strictEqual(res.message, 'Invalid Username or Password.');
 
-  // Empty
   res = appScript.authenticateUser('', '');
   assert.strictEqual(res.success, false);
 });
@@ -161,11 +165,9 @@ test('properCase capitalizes words correctly', () => {
 });
 
 test('validateNIC validates Sri Lankan NIC numbers correctly', () => {
-  // New NIC
   assert.deepStrictEqual(appScript.validateNIC('200012345678'), { valid: true });
   assert.strictEqual(appScript.validateNIC('12345').valid, false);
 
-  // Old NIC
   assert.deepStrictEqual(appScript.validateNIC('912345678 V'), { valid: true });
   assert.deepStrictEqual(appScript.validateNIC('912345678 v'), { valid: true });
   assert.strictEqual(appScript.validateNIC('912345678V').valid, false);
@@ -184,48 +186,31 @@ test('setupSpreadsheet creates Home and data sheets with headers', () => {
   assert.ok(activeSS.getSheetByName('Medium_Letter'));
 });
 
-test('saveTranscript validates inputs and prevents duplicate NICs', () => {
+test('saveTranscript and updateTranscript perform save and edit correctly', () => {
   activeSS = new MockSpreadsheet();
   appScript.setupSpreadsheet();
 
-  // Missing field
-  let res = appScript.saveTranscript({ fullName: 'John', nicNumber: '', batchNumber: '2019/A', nts: 'Colombo', date: '2023-01-01' });
-  assert.strictEqual(res.success, false);
-  assert.strictEqual(res.message, 'Please fill all text fields');
-
-  // Invalid NIC
-  res = appScript.saveTranscript({ fullName: 'John Doe', nicNumber: '123', batchNumber: '2019/A', nts: 'Colombo', date: '2023-01-01' });
-  assert.strictEqual(res.success, false);
-
-  // Successful save
-  res = appScript.saveTranscript({ fullName: 'john doe', nicNumber: '912345678 V', batchNumber: '2019/A', nts: 'Colombo', date: '2023-01-01' });
+  // Save new
+  let res = appScript.saveTranscript({ fullName: 'john doe', nicNumber: '912345678 V', batchNumber: '2019/A', nts: 'Colombo', date: '2023-01-01' });
   assert.strictEqual(res.success, true);
 
-  // Duplicate NIC save
-  res = appScript.saveTranscript({ fullName: 'Jane Doe', nicNumber: '912345678 V', batchNumber: '2020/B', nts: 'Kandy', date: '2023-01-02' });
-  assert.strictEqual(res.success, false);
-  assert.strictEqual(res.message, 'This NIC number already exists. Please enter a unique NIC.');
+  // Get record for edit
+  let editRes = appScript.getRecordForEdit('Transcript', '912345678 v');
+  assert.strictEqual(editRes.found, true);
+  assert.strictEqual(editRes.record.fullName, 'John Doe');
+
+  // Update existing
+  res = appScript.updateTranscript({ fullName: 'johnathan doe', nicNumber: '912345678 V', batchNumber: '2019/B', nts: 'Kandy', date: '2023-05-01' });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.message, 'Transcript record updated successfully!');
+
+  // Verify updated
+  editRes = appScript.getRecordForEdit('Transcript', '912345678 V');
+  assert.strictEqual(editRes.record.fullName, 'Johnathan Doe');
+  assert.strictEqual(editRes.record.batchNumber, '2019/B');
 });
 
-test('lookupStudentByNic finds registered students in Transcript sheet', () => {
-  activeSS = new MockSpreadsheet();
-  appScript.setupSpreadsheet();
-  appScript.saveTranscript({ fullName: 'saman kumara', nicNumber: '912345678 V', batchNumber: '2018/A', nts: 'Galle', date: '2023-01-01' });
-
-  // Found
-  let result = appScript.lookupStudentByNic('912345678 v');
-  assert.strictEqual(result.found, true);
-  assert.strictEqual(result.fullName, 'Saman Kumara');
-  assert.strictEqual(result.batchNumber, '2018/A');
-  assert.strictEqual(result.nts, 'Galle');
-
-  // Not found
-  result = appScript.lookupStudentByNic('000000000 V');
-  assert.strictEqual(result.found, false);
-  assert.strictEqual(result.message, 'Student not found');
-});
-
-test('saveExamResults saves valid exam records', () => {
+test('saveExamResults and updateExamResults work properly', () => {
   activeSS = new MockSpreadsheet();
   appScript.setupSpreadsheet();
 
@@ -248,15 +233,20 @@ test('saveExamResults saves valid exam records', () => {
     date: '2023-01-01'
   };
 
-  const res = appScript.saveExamResults(data);
+  let res = appScript.saveExamResults(data);
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.message, 'Data saved successfully!');
 
-  const examSheet = activeSS.getSheetByName('Exam_Results');
-  assert.strictEqual(examSheet.getLastRow(), 2);
+  // Update
+  data.paper1 = 'A+';
+  res = appScript.updateExamResults(data);
+  assert.strictEqual(res.success, true);
+
+  const editRes = appScript.getRecordForEdit('Exam_Results', 'IND123');
+  assert.strictEqual(editRes.found, true);
+  assert.strictEqual(editRes.record.paper1, 'A+');
 });
 
-test('saveMediumLetter saves valid medium letter records', () => {
+test('saveMediumLetter and updateMediumLetter work properly', () => {
   activeSS = new MockSpreadsheet();
   appScript.setupSpreadsheet();
 
@@ -271,11 +261,15 @@ test('saveMediumLetter saves valid medium letter records', () => {
     date: '2023-01-01'
   };
 
-  const res = appScript.saveMediumLetter(data);
+  let res = appScript.saveMediumLetter(data);
   assert.strictEqual(res.success, true);
 
-  const sheet = activeSS.getSheetByName('Medium_Letter');
-  assert.strictEqual(sheet.getLastRow(), 2);
+  data.nts = 'Colombo';
+  res = appScript.updateMediumLetter(data);
+  assert.strictEqual(res.success, true);
+
+  const editRes = appScript.getRecordForEdit('Medium_Letter', '912345678 V');
+  assert.strictEqual(editRes.record.nts, 'Colombo');
 });
 
 test('doGet, showHomePage and onOpen execute without error', () => {

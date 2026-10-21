@@ -96,6 +96,56 @@
       font-size: 1.3rem;
     }
 
+    /* Search Bar for Editing */
+    .search-box {
+      background-color: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .search-box input {
+      flex: 1;
+    }
+    .btn-search {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-search:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* Action Buttons Bar */
+    .action-bar {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .btn-update {
+      background-color: #d97706;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      flex: 1;
+      transition: background-color 0.2s;
+    }
+    .btn-update:hover {
+      background-color: #b45309;
+    }
+
     /* Login Box Layout */
     .login-container {
       max-width: 400px;
@@ -213,8 +263,7 @@
       font-size: 0.95rem;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 20px;
-      width: 100%;
+      flex: 1;
       transition: background-color 0.2s;
     }
     .btn-submit:hover {
@@ -252,6 +301,9 @@
       .results-grid-title {
         grid-column: span 1;
       }
+      .action-bar {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -285,7 +337,7 @@
         <label for="login-password">Password</label>
         <input type="password" id="login-password" required placeholder="Enter password">
       </div>
-      <button type="submit" class="btn-submit">Sign In</button>
+      <button type="submit" class="btn-submit" style="width: 100%;">Sign In</button>
     </form>
   </div>
 
@@ -321,6 +373,13 @@
     <!-- TRANSCRIPT ENTRY FORM -->
     <div id="tab-transcript" class="tab-content">
       <h2>Transcript / Student Entry Form</h2>
+
+      <!-- Search/Edit Bar -->
+      <div class="search-box">
+        <input type="text" id="ts-searchNic" placeholder="Enter NIC Number to search & edit existing record">
+        <button type="button" class="btn-search" onclick="loadRecordForEdit('Transcript')">Load Record</button>
+      </div>
+
       <div id="transcript-alert" class="alert-box"></div>
       <form id="form-transcript" onsubmit="handleTranscriptSubmit(event)">
         <div class="form-grid">
@@ -347,18 +406,29 @@
             <input type="date" id="ts-date" required>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Save Record</button>
+
+        <div class="action-bar">
+          <button type="submit" class="btn-submit">Save New Record</button>
+          <button type="button" class="btn-update" onclick="handleTranscriptUpdate()">Update Record</button>
+        </div>
       </form>
     </div>
 
     <!-- EXAM RESULTS ENTRY FORM -->
     <div id="tab-exam" class="tab-content">
       <h2>Exam Results Entry Form</h2>
+
+      <!-- Search/Edit Bar -->
+      <div class="search-box">
+        <input type="text" id="ex-searchKey" placeholder="Enter NIC or Index Number to load existing exam record">
+        <button type="button" class="btn-search" onclick="loadRecordForEdit('Exam_Results')">Load Record</button>
+      </div>
+
       <div id="exam-alert" class="alert-box"></div>
       <form id="form-exam" onsubmit="handleExamSubmit(event)">
         <div class="form-grid">
           <div class="form-group">
-            <label for="ex-nic">NIC Number (Search)</label>
+            <label for="ex-nic">NIC Number (Search/Entry)</label>
             <input type="text" id="ex-nic" required placeholder="Enter NIC & tab out to lookup" onchange="lookupStudentExam()">
           </div>
           <div class="form-group">
@@ -436,18 +506,29 @@
             <input type="date" id="ex-date" required>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Save Exam Results</button>
+
+        <div class="action-bar">
+          <button type="submit" class="btn-submit">Save New Exam Results</button>
+          <button type="button" class="btn-update" onclick="handleExamUpdate()">Update Exam Results</button>
+        </div>
       </form>
     </div>
 
     <!-- MEDIUM LETTER ENTRY FORM -->
     <div id="tab-medium" class="tab-content">
       <h2>Medium Letter Entry Form</h2>
+
+      <!-- Search/Edit Bar -->
+      <div class="search-box">
+        <input type="text" id="med-searchNic" placeholder="Enter NIC Number to load existing medium letter record">
+        <button type="button" class="btn-search" onclick="loadRecordForEdit('Medium_Letter')">Load Record</button>
+      </div>
+
       <div id="medium-alert" class="alert-box"></div>
       <form id="form-medium" onsubmit="handleMediumSubmit(event)">
         <div class="form-grid">
           <div class="form-group">
-            <label for="med-nic">NIC Number (Search)</label>
+            <label for="med-nic">NIC Number (Search/Entry)</label>
             <input type="text" id="med-nic" required placeholder="Enter NIC & tab out to lookup" onchange="lookupStudentMedium()">
           </div>
           <div class="form-group">
@@ -483,7 +564,11 @@
             <input type="date" id="med-date" required>
           </div>
         </div>
-        <button type="submit" class="btn-submit">Save Medium Letter</button>
+
+        <div class="action-bar">
+          <button type="submit" class="btn-submit">Save New Medium Letter</button>
+          <button type="button" class="btn-update" onclick="handleMediumUpdate()">Update Medium Letter</button>
+        </div>
       </form>
     </div>
 
@@ -524,7 +609,6 @@
           })
           .authenticateUser(usernameInput, passwordInput);
       } else {
-        // Fallback validation in preview mode
         if (usernameInput === 'admin' && passwordInput === 'admin123') {
           loginSuccess('admin');
         } else {
@@ -608,7 +692,93 @@
       }).join(' ');
     }
 
-    // Handle Transcript Submit
+    // LOAD RECORD FOR EDITING
+    function loadRecordForEdit(moduleName) {
+      hideAlerts();
+      let searchKey = '';
+      let alertId = '';
+
+      if (moduleName === 'Transcript') {
+        searchKey = document.getElementById('ts-searchNic').value;
+        alertId = 'transcript-alert';
+      } else if (moduleName === 'Exam_Results') {
+        searchKey = document.getElementById('ex-searchKey').value;
+        alertId = 'exam-alert';
+      } else if (moduleName === 'Medium_Letter') {
+        searchKey = document.getElementById('med-searchNic').value;
+        alertId = 'medium-alert';
+      }
+
+      if (!searchKey || !searchKey.trim()) {
+        showAlert(alertId, 'Please enter a search key (NIC/Index Number).', false);
+        return;
+      }
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res.found) {
+              const rec = res.record;
+              if (moduleName === 'Transcript') {
+                document.getElementById('ts-fullName').value = rec.fullName || '';
+                document.getElementById('ts-nicNumber').value = rec.nicNumber || '';
+                document.getElementById('ts-batchNumber').value = rec.batchNumber || '';
+                document.getElementById('ts-nts').value = rec.nts || '';
+                document.getElementById('ts-date').value = formatDateForInput(rec.date);
+              } else if (moduleName === 'Exam_Results') {
+                document.getElementById('ex-title').value = rec.title || '';
+                document.getElementById('ex-fullName').value = rec.fullName || '';
+                document.getElementById('ex-indexNumber').value = rec.indexNumber || '';
+                document.getElementById('ex-nic').value = rec.nic || '';
+                document.getElementById('ex-batchNumber').value = rec.batchNumber || '';
+                document.getElementById('ex-nts').value = rec.nts || '';
+                document.getElementById('ex-hisHer').value = rec.hisHer || '';
+                document.getElementById('ex-fromDate').value = formatDateForInput(rec.fromDate);
+                document.getElementById('ex-toDate').value = formatDateForInput(rec.toDate);
+                document.getElementById('ex-paper1').value = rec.paper1 || '';
+                document.getElementById('ex-paper2').value = rec.paper2 || '';
+                document.getElementById('ex-paper3').value = rec.paper3 || '';
+                document.getElementById('ex-paper4').value = rec.paper4 || '';
+                document.getElementById('ex-paper5').value = rec.paper5 || '';
+                document.getElementById('ex-practical').value = rec.practical || '';
+                document.getElementById('ex-date').value = formatDateForInput(rec.date);
+                checkBatchYearExam();
+              } else if (moduleName === 'Medium_Letter') {
+                document.getElementById('med-nic').value = rec.nic || '';
+                document.getElementById('med-title').value = rec.title || '';
+                document.getElementById('med-fullName').value = rec.fullName || '';
+                document.getElementById('med-batchNo').value = rec.batchNo || '';
+                document.getElementById('med-nts').value = rec.nts || '';
+                document.getElementById('med-fromDate').value = formatDateForInput(rec.fromDate);
+                document.getElementById('med-toDate').value = formatDateForInput(rec.toDate);
+                document.getElementById('med-date').value = formatDateForInput(rec.date);
+              }
+              showAlert(alertId, 'Record loaded successfully for editing.', true);
+            } else {
+              showAlert(alertId, res.message || 'Record not found.', false);
+            }
+          })
+          .getRecordForEdit(moduleName, searchKey);
+      } else {
+        showAlert(alertId, 'Record loaded (Preview Mode)', true);
+      }
+    }
+
+    function formatDateForInput(dateVal) {
+      if (!dateVal) return '';
+      if (dateVal instanceof Date) {
+        return dateVal.toISOString().substring(0, 10);
+      }
+      const str = String(dateVal).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().substring(0, 10);
+      }
+      return str;
+    }
+
+    // Handle Transcript Submit (New)
     function handleTranscriptSubmit(e) {
       e.preventDefault();
       hideAlerts();
@@ -638,6 +808,31 @@
           .saveTranscript(data);
       } else {
         showAlert('transcript-alert', 'Data saved (Preview Mode)', true);
+      }
+    }
+
+    // Handle Transcript Update
+    function handleTranscriptUpdate() {
+      hideAlerts();
+      const fullName = properCase(document.getElementById('ts-fullName').value);
+      document.getElementById('ts-fullName').value = fullName;
+
+      const data = {
+        fullName: fullName,
+        nicNumber: document.getElementById('ts-nicNumber').value,
+        batchNumber: document.getElementById('ts-batchNumber').value,
+        nts: document.getElementById('ts-nts').value,
+        date: document.getElementById('ts-date').value
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            showAlert('transcript-alert', res.message, res.success);
+          })
+          .updateTranscript(data);
+      } else {
+        showAlert('transcript-alert', 'Transcript updated (Preview Mode)', true);
       }
     }
 
@@ -682,12 +877,8 @@
       }
     }
 
-    // Handle Exam Results Submit
-    function handleExamSubmit(e) {
-      e.preventDefault();
-      hideAlerts();
-
-      const data = {
+    function getExamFormData() {
+      return {
         title: document.getElementById('ex-title').value,
         fullName: document.getElementById('ex-fullName').value,
         indexNumber: document.getElementById('ex-indexNumber').value,
@@ -705,6 +896,13 @@
         practical: document.getElementById('ex-practical').value,
         date: document.getElementById('ex-date').value
       };
+    }
+
+    // Handle Exam Results Submit
+    function handleExamSubmit(e) {
+      e.preventDefault();
+      hideAlerts();
+      const data = getExamFormData();
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -721,6 +919,22 @@
           .saveExamResults(data);
       } else {
         showAlert('exam-alert', 'Exam results saved (Preview Mode)', true);
+      }
+    }
+
+    // Handle Exam Results Update
+    function handleExamUpdate() {
+      hideAlerts();
+      const data = getExamFormData();
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            showAlert('exam-alert', res.message, res.success);
+          })
+          .updateExamResults(data);
+      } else {
+        showAlert('exam-alert', 'Exam results updated (Preview Mode)', true);
       }
     }
 
@@ -744,12 +958,8 @@
       }
     }
 
-    // Handle Medium Letter Submit
-    function handleMediumSubmit(e) {
-      e.preventDefault();
-      hideAlerts();
-
-      const data = {
+    function getMediumFormData() {
+      return {
         nic: document.getElementById('med-nic').value,
         title: document.getElementById('med-title').value,
         fullName: document.getElementById('med-fullName').value,
@@ -759,6 +969,13 @@
         toDate: document.getElementById('med-toDate').value,
         date: document.getElementById('med-date').value
       };
+    }
+
+    // Handle Medium Letter Submit
+    function handleMediumSubmit(e) {
+      e.preventDefault();
+      hideAlerts();
+      const data = getMediumFormData();
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -774,6 +991,22 @@
           .saveMediumLetter(data);
       } else {
         showAlert('medium-alert', 'Medium letter saved (Preview Mode)', true);
+      }
+    }
+
+    // Handle Medium Letter Update
+    function handleMediumUpdate() {
+      hideAlerts();
+      const data = getMediumFormData();
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(res => {
+            showAlert('medium-alert', res.message, res.success);
+          })
+          .updateMediumLetter(data);
+      } else {
+        showAlert('medium-alert', 'Medium letter updated (Preview Mode)', true);
       }
     }
   </script>
