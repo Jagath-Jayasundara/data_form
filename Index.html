@@ -847,21 +847,17 @@
     }
 
     // Exam Results NIC Lookup to populate Full Name, Batch Number, and NTS
-    let examAutoPopulated = false;
-
     function lookupStudentExam(eventType) {
       const nic = document.getElementById('ex-nic').value.trim();
 
-      if (!nic) {
+      if (!isFullNic(nic)) {
         document.getElementById('ex-fullName').value = '';
         document.getElementById('ex-batchNumber').value = '';
         document.getElementById('ex-nts').value = '';
         checkBatchYearExam();
-        examAutoPopulated = false;
-        return;
-      }
-
-      if (!isFullNic(nic) && eventType === 'input') {
+        if (eventType !== 'input' && nic !== '') {
+          showAlert('exam-alert', 'Please enter a valid full NIC number', false);
+        }
         return;
       }
 
@@ -873,8 +869,11 @@
               document.getElementById('ex-batchNumber').value = res.batchNumber || '';
               document.getElementById('ex-nts').value = res.nts || '';
               checkBatchYearExam();
-              examAutoPopulated = true;
             } else {
+              document.getElementById('ex-fullName').value = '';
+              document.getElementById('ex-batchNumber').value = '';
+              document.getElementById('ex-nts').value = '';
+              checkBatchYearExam();
               if (eventType !== 'input') {
                 showAlert('exam-alert', res.message || 'Student not found in Transcript sheet', false);
               }
@@ -966,20 +965,16 @@
     }
 
     // Medium Letter NIC Lookup to populate Full Name, Batch Number, and NTS
-    let mediumAutoPopulated = false;
-
     function lookupStudentMedium(eventType) {
       const nic = document.getElementById('med-nic').value.trim();
 
-      if (!nic) {
+      if (!isFullNic(nic)) {
         document.getElementById('med-fullName').value = '';
         document.getElementById('med-batchNo').value = '';
         document.getElementById('med-nts').value = '';
-        mediumAutoPopulated = false;
-        return;
-      }
-
-      if (!isFullNic(nic) && eventType === 'input') {
+        if (eventType !== 'input' && nic !== '') {
+          showAlert('medium-alert', 'Please enter a valid full NIC number', false);
+        }
         return;
       }
 
@@ -990,8 +985,10 @@
               document.getElementById('med-fullName').value = res.fullName || '';
               document.getElementById('med-batchNo').value = res.batchNumber || '';
               document.getElementById('med-nts').value = res.nts || '';
-              mediumAutoPopulated = true;
             } else {
+              document.getElementById('med-fullName').value = '';
+              document.getElementById('med-batchNo').value = '';
+              document.getElementById('med-nts').value = '';
               if (eventType !== 'input') {
                 showAlert('medium-alert', res.message || 'Student not found in Transcript sheet', false);
               }
