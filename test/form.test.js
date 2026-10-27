@@ -175,7 +175,7 @@ test('validateNIC validates Sri Lankan NIC numbers correctly', () => {
   assert.strictEqual(appScript.validateNIC('912345678 X').valid, false);
 });
 
-test('lookupStudentByNic populates student details from Transcript sheet', () => {
+test('lookupStudentByNic populates student details from Transcript sheet and handles empty NIC inputs', () => {
   activeSS = new MockSpreadsheet();
   appScript.setupSpreadsheet();
   appScript.saveTranscript({ fullName: 'saman kumara', nicNumber: '912345678 V', batchNumber: '2019/A', nts: 'Galle', date: '2023-01-01' });
@@ -191,6 +191,13 @@ test('lookupStudentByNic populates student details from Transcript sheet', () =>
   result = appScript.lookupStudentByNic('912345678v');
   assert.strictEqual(result.found, true);
   assert.strictEqual(result.fullName, 'Saman Kumara');
+
+  // Empty or non-existent NIC input
+  result = appScript.lookupStudentByNic('');
+  assert.strictEqual(result.found, false);
+
+  result = appScript.lookupStudentByNic('000000000000');
+  assert.strictEqual(result.found, false);
 });
 
 test('setupSpreadsheet creates Home and data sheets with headers', () => {

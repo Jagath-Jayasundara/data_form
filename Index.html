@@ -429,7 +429,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="ex-nic">NIC Number (Auto Lookup Transcript)</label>
-            <input type="text" id="ex-nic" required placeholder="Enter NIC to auto-populate student data" oninput="lookupStudentExam()" onchange="lookupStudentExam()" onblur="lookupStudentExam()">
+            <input type="text" id="ex-nic" required placeholder="Enter NIC to auto-populate student data" oninput="lookupStudentExam('input')" onchange="lookupStudentExam('change')" onblur="lookupStudentExam('blur')">
           </div>
           <div class="form-group">
             <label for="ex-title">Title</label>
@@ -529,7 +529,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label for="med-nic">NIC Number (Auto Lookup Transcript)</label>
-            <input type="text" id="med-nic" required placeholder="Enter NIC to auto-populate student data" oninput="lookupStudentMedium()" onchange="lookupStudentMedium()" onblur="lookupStudentMedium()">
+            <input type="text" id="med-nic" required placeholder="Enter NIC to auto-populate student data" oninput="lookupStudentMedium('input')" onchange="lookupStudentMedium('change')" onblur="lookupStudentMedium('blur')">
           </div>
           <div class="form-group">
             <label for="med-title">Title</label>
@@ -692,6 +692,16 @@
       }).join(' ');
     }
 
+    // Helper to check if full NIC number is entered
+    function isFullNic(nic) {
+      if (!nic) return false;
+      const clean = nic.trim();
+      if (/^\d{12}$/.test(clean)) return true;
+      if (/^\d{9}[vVxX]$/.test(clean)) return true;
+      if (/^\d{9}\s[vVxX]$/.test(clean)) return true;
+      return false;
+    }
+
     // LOAD RECORD FOR EDITING
     function loadRecordForEdit(moduleName) {
       hideAlerts();
@@ -837,9 +847,23 @@
     }
 
     // Exam Results NIC Lookup to populate Full Name, Batch Number, and NTS
-    function lookupStudentExam() {
+    let examAutoPopulated = false;
+
+    function lookupStudentExam(eventType) {
       const nic = document.getElementById('ex-nic').value.trim();
-      if (!nic) return;
+
+      if (!nic) {
+        document.getElementById('ex-fullName').value = '';
+        document.getElementById('ex-batchNumber').value = '';
+        document.getElementById('ex-nts').value = '';
+        checkBatchYearExam();
+        examAutoPopulated = false;
+        return;
+      }
+
+      if (!isFullNic(nic) && eventType === 'input') {
+        return;
+      }
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -849,8 +873,11 @@
               document.getElementById('ex-batchNumber').value = res.batchNumber || '';
               document.getElementById('ex-nts').value = res.nts || '';
               checkBatchYearExam();
+              examAutoPopulated = true;
             } else {
-              showAlert('exam-alert', res.message || 'Student not found in Transcript sheet', false);
+              if (eventType !== 'input') {
+                showAlert('exam-alert', res.message || 'Student not found in Transcript sheet', false);
+              }
             }
           })
           .lookupStudentByNic(nic);
@@ -939,9 +966,22 @@
     }
 
     // Medium Letter NIC Lookup to populate Full Name, Batch Number, and NTS
-    function lookupStudentMedium() {
+    let mediumAutoPopulated = false;
+
+    function lookupStudentMedium(eventType) {
       const nic = document.getElementById('med-nic').value.trim();
-      if (!nic) return;
+
+      if (!nic) {
+        document.getElementById('med-fullName').value = '';
+        document.getElementById('med-batchNo').value = '';
+        document.getElementById('med-nts').value = '';
+        mediumAutoPopulated = false;
+        return;
+      }
+
+      if (!isFullNic(nic) && eventType === 'input') {
+        return;
+      }
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -950,8 +990,11 @@
               document.getElementById('med-fullName').value = res.fullName || '';
               document.getElementById('med-batchNo').value = res.batchNumber || '';
               document.getElementById('med-nts').value = res.nts || '';
+              mediumAutoPopulated = true;
             } else {
-              showAlert('medium-alert', res.message || 'Student not found in Transcript sheet', false);
+              if (eventType !== 'input') {
+                showAlert('medium-alert', res.message || 'Student not found in Transcript sheet', false);
+              }
             }
           })
           .lookupStudentByNic(nic);
