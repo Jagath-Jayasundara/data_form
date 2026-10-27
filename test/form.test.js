@@ -175,6 +175,24 @@ test('validateNIC validates Sri Lankan NIC numbers correctly', () => {
   assert.strictEqual(appScript.validateNIC('912345678 X').valid, false);
 });
 
+test('lookupStudentByNic populates student details from Transcript sheet', () => {
+  activeSS = new MockSpreadsheet();
+  appScript.setupSpreadsheet();
+  appScript.saveTranscript({ fullName: 'saman kumara', nicNumber: '912345678 V', batchNumber: '2019/A', nts: 'Galle', date: '2023-01-01' });
+
+  // Standard match
+  let result = appScript.lookupStudentByNic('912345678 V');
+  assert.strictEqual(result.found, true);
+  assert.strictEqual(result.fullName, 'Saman Kumara');
+  assert.strictEqual(result.batchNumber, '2019/A');
+  assert.strictEqual(result.nts, 'Galle');
+
+  // Flexible space match
+  result = appScript.lookupStudentByNic('912345678v');
+  assert.strictEqual(result.found, true);
+  assert.strictEqual(result.fullName, 'Saman Kumara');
+});
+
 test('setupSpreadsheet creates Home and data sheets with headers', () => {
   activeSS = new MockSpreadsheet();
   const res = appScript.setupSpreadsheet();
@@ -190,21 +208,17 @@ test('saveTranscript and updateTranscript perform save and edit correctly', () =
   activeSS = new MockSpreadsheet();
   appScript.setupSpreadsheet();
 
-  // Save new
   let res = appScript.saveTranscript({ fullName: 'john doe', nicNumber: '912345678 V', batchNumber: '2019/A', nts: 'Colombo', date: '2023-01-01' });
   assert.strictEqual(res.success, true);
 
-  // Get record for edit
   let editRes = appScript.getRecordForEdit('Transcript', '912345678 v');
   assert.strictEqual(editRes.found, true);
   assert.strictEqual(editRes.record.fullName, 'John Doe');
 
-  // Update existing
   res = appScript.updateTranscript({ fullName: 'johnathan doe', nicNumber: '912345678 V', batchNumber: '2019/B', nts: 'Kandy', date: '2023-05-01' });
   assert.strictEqual(res.success, true);
   assert.strictEqual(res.message, 'Transcript record updated successfully!');
 
-  // Verify updated
   editRes = appScript.getRecordForEdit('Transcript', '912345678 V');
   assert.strictEqual(editRes.record.fullName, 'Johnathan Doe');
   assert.strictEqual(editRes.record.batchNumber, '2019/B');
@@ -236,7 +250,6 @@ test('saveExamResults and updateExamResults work properly', () => {
   let res = appScript.saveExamResults(data);
   assert.strictEqual(res.success, true);
 
-  // Update
   data.paper1 = 'A+';
   res = appScript.updateExamResults(data);
   assert.strictEqual(res.success, true);

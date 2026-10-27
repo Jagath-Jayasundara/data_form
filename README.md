@@ -31,16 +31,16 @@ When launched, users must authenticate before accessing the Home Page Access Tab
 
 ### 3. Exam Results Entry Form
 - Fields: Title, Full Name, Index Number, NIC Number, Batch Number, NTS, His/Her, From Date, To Date, Paper I, Paper II, Paper III, Paper IV, Paper V (conditional), Practical, Date.
+- **Automatic Transcript Data Population**: Entering the student's NIC automatically retrieves and populates **Full Name**, **Batch Number**, and **NTS** from the `Transcript` data sheet.
 - **Edit & Update Service**: Search by NIC or Index Number using the "Load Record" search bar to retrieve and update exam results.
 - Results section arranged cleanly in 2 rows (Row 1: Paper I, II, III; Row 2: Paper IV, V, Practical).
-- Automatic student lookup by NIC from the `Transcript` sheet to auto-fill Full Name, Batch Number, and NTS.
 - Dynamic conditional field: Enables **Paper V** if Batch Number year is $\ge 2018$.
 - Saves records to the `Exam_Results` sheet.
 
 ### 4. Medium Letter Entry Form
 - Fields: NIC Number, Title, Full Name, Batch Number, NTS, From Date, To Date, Date.
+- **Automatic Transcript Data Population**: Entering the student's NIC automatically retrieves and populates **Full Name**, **Batch Number**, and **NTS** from the `Transcript` data sheet.
 - **Edit & Update Service**: Search by NIC Number to load and update existing medium letter records.
-- Automatic student lookup by NIC from the `Transcript` sheet.
 - Saves records to the `Medium_Letter` sheet.
 
 ---

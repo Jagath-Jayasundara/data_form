@@ -188,7 +188,7 @@ function setupSpreadsheet() {
 }
 
 /**
- * Searches for a student by NIC in the Transcript sheet.
+ * Searches for a student by NIC in the Transcript sheet to populate Full Name, Batch Number, and NTS.
  * @param {string} nic - Student NIC number.
  * @return {{found: boolean, fullName?: string, batchNumber?: string, nts?: string, message?: string}}
  */
@@ -196,7 +196,10 @@ function lookupStudentByNic(nic) {
   if (!nic || !String(nic).trim()) {
     return { found: false, message: 'Student not found' };
   }
-  const targetNic = String(nic).trim().toUpperCase();
+
+  const cleanInput = String(nic).replace(/\s+/g, ' ').trim().toUpperCase();
+  const rawInput = String(nic).replace(/\s+/g, '').toUpperCase();
+
   const sheet = getOrCreateSheet('Transcript');
   const lastRow = sheet.getLastRow();
 
@@ -206,8 +209,10 @@ function lookupStudentByNic(nic) {
 
   const data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   for (let i = 0; i < data.length; i++) {
-    const rowNic = String(data[i][1]).trim().toUpperCase();
-    if (rowNic === targetNic) {
+    const rowNicClean = String(data[i][1]).replace(/\s+/g, ' ').trim().toUpperCase();
+    const rowNicRaw = String(data[i][1]).replace(/\s+/g, '').toUpperCase();
+
+    if (rowNicClean === cleanInput || rowNicRaw === rawInput) {
       return {
         found: true,
         fullName: data[i][0],
@@ -246,13 +251,10 @@ function getRecordForEdit(sheetName, searchKey) {
     let match = false;
 
     if (sheetName === 'Transcript') {
-      // Col 2 is NIC Number
       if (String(row[1]).trim().toUpperCase() === key) match = true;
     } else if (sheetName === 'Exam_Results') {
-      // Col 3 is Index Number, Col 4 is NIC Number
       if (String(row[2]).trim().toUpperCase() === key || String(row[3]).trim().toUpperCase() === key) match = true;
     } else if (sheetName === 'Medium_Letter') {
-      // Col 3 is NIC Number
       if (String(row[2]).trim().toUpperCase() === key) match = true;
     }
 
