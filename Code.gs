@@ -1,7 +1,7 @@
 
 const SPREADSHEET_PROPERTY = 'EXAM_STAFF_SPREADSHEET_ID';
 
-// Change these example capacities to your actual staffing requirements.
+// Default general capacities per location
 const LOCATION_CAPACITIES = {
   'PBCN-Colombo': 9,
   'CON-Ampara': 3,
@@ -10,6 +10,18 @@ const LOCATION_CAPACITIES = {
   'CON-Jaffna': 2,
   'CON-Kandy': 3,
   'CON-Kurunegala': 3,
+  'CON-Ratnapura': 2,
+};
+
+// Default quota allocated specifically for staff in the Junior group (2 vacancies per location)
+const JUNIOR_LOCATION_CAPACITIES = {
+  'PBCN-Colombo': 2,
+  'CON-Ampara': 2,
+  'CON-Anuradhapura': 2,
+  'CON-Galle': 2,
+  'CON-Jaffna': 2,
+  'CON-Kandy': 2,
+  'CON-Kurunegala': 2,
   'CON-Ratnapura': 2,
 };
 
@@ -64,7 +76,7 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-function getFormOptions() {
+function getFormOptions(category) {
   const spreadsheetId = PropertiesService.getScriptProperties()
     .getProperty(SPREADSHEET_PROPERTY);
 
@@ -82,16 +94,33 @@ function getFormOptions() {
   }
 
   const lastRow = sheet.getLastRow();
-  const submittedLocations = lastRow >= 2
-    ? sheet.getRange(2, 8, lastRow - 1, 1).getDisplayValues().flat()
-    : [];
+  const isJunior = category === 'Junior';
+  const capacities = isJunior ? JUNIOR_LOCATION_CAPACITIES : LOCATION_CAPACITIES;
+
+  let submittedRecords = [];
+  if (lastRow >= 2) {
+    // Columns: Category (Col 5), Preferred Location (Col 8)
+    const values = sheet.getRange(2, 1, lastRow - 1, 8).getDisplayValues();
+    submittedRecords = values.map(row => ({
+      category: (row[4] || '').trim(),
+      location: (row[7] || '').trim()
+    }));
+  }
 
   return {
-    locations: Object.entries(LOCATION_CAPACITIES).map(
+    category: isJunior ? 'Junior' : 'General',
+    locations: Object.entries(capacities).map(
       ([name, capacity]) => {
-        const registered = submittedLocations.filter(
-          location => location.trim() === name
-        ).length;
+        let registered = 0;
+        if (isJunior) {
+          registered = submittedRecords.filter(
+            rec => rec.location === name && rec.category === 'Junior'
+          ).length;
+        } else {
+          registered = submittedRecords.filter(
+            rec => rec.location === name
+          ).length;
+        }
 
         return {
           name: name,
@@ -107,7 +136,7 @@ function getFormOptions() {
 
 function getEmployeeCategory(designation) {
   if (!designation || typeof designation !== 'string') {
-    return '';
+    return 'Senior';
   }
 
   const clean = designation.trim().toUpperCase();
@@ -120,18 +149,7 @@ function getEmployeeCategory(designation) {
     return 'Junior';
   }
 
-  // Senior group includes positions such as ICT Officer, Development Officer,
-  // and Public Health Management Assistants (Grades I, II, and III).
-  const isSenior = clean.includes('ICT') ||
-                   clean.includes('DEVELOPMENT OFFICER') ||
-                   clean.includes('PUBLIC HEALTH MANAGEMENT ASSISTANT') ||
-                   clean.includes('PHMA');
-
-  if (isSenior) {
-    return 'Senior';
-  }
-
-  return 'Senior'; // Default to Senior if categorized under supervisory examination staff
+  return 'Senior';
 }
 
 function submitForm(data) {
@@ -152,11 +170,10 @@ function submitForm(data) {
 
   const normalizedNic = validateAndNormalizeNic(nic);
   const category = getEmployeeCategory(designation);
+  const isJunior = category === 'Junior';
+  const targetCapacities = isJunior ? JUNIOR_LOCATION_CAPACITIES : LOCATION_CAPACITIES;
 
-  if (!Object.prototype.hasOwnProperty.call(
-    LOCATION_CAPACITIES,
-    preferredLocation
-  )) {
+  if (!Object.prototype.hasOwnProperty.call(targetCapacities, preferredLocation)) {
     throw new Error('Please select a valid preferred location.');
   }
 
@@ -176,7 +193,6 @@ function submitForm(data) {
   }
 
   // Keep the duplicate check, capacity check, and row insertion under the same lock.
-  // This helps prevent duplicate submissions and overbooking when multiple people submit together.
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -206,24 +222,34 @@ function submitForm(data) {
           throw new Error('An entry with this telephone number has already been submitted.');
         }
       }
-    }
 
-    const capacity = LOCATION_CAPACITIES[preferredLocation];
+      // Check capacity for the specific group
+      const capacity = targetCapacities[preferredLocation];
+      let registered = 0;
 
-    const registeredLocations = lastRow >= 2
-      ? sheet.getRange(2, 8, lastRow - 1, 1).getDisplayValues().flat()
-      : [];
+      for (let i = 0; i < existingValues.length; i++) {
+        const rowCategory = (existingValues[i][4] || '').trim();
+        const rowLocation = (existingValues[i][7] || '').trim();
 
-    const registered = registeredLocations.filter(
-      location => location.trim() === preferredLocation
-    ).length;
+        if (rowLocation === preferredLocation) {
+          if (isJunior) {
+            if (rowCategory === 'Junior') {
+              registered++;
+            }
+          } else {
+            registered++;
+          }
+        }
+      }
 
-    if (registered >= capacity) {
-      throw new Error(
-        'Sorry, ' + preferredLocation +
-        ' has reached its maximum capacity of ' + capacity +
-        ' staff members. Please select another location.'
-      );
+      if (registered >= capacity) {
+        throw new Error(
+          'Sorry, ' + preferredLocation +
+          ' has reached its maximum capacity of ' + capacity +
+          (isJunior ? ' staff members for the Junior quota.' : ' staff members.') +
+          ' Please select another location.'
+        );
+      }
     }
 
     sheet.appendRow([
@@ -286,6 +312,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     SPREADSHEET_PROPERTY,
     LOCATION_CAPACITIES,
+    JUNIOR_LOCATION_CAPACITIES,
     setup,
     doGet,
     getFormOptions,

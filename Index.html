@@ -235,13 +235,25 @@
     const button = document.getElementById('submitButton');
     const statusBox = document.getElementById('status');
     const locationSelect = document.getElementById('preferredLocation');
+    const designationInput = document.getElementById('designation');
 
     function showStatus(message, type) {
       statusBox.textContent = message;
       statusBox.className = type;
     }
 
+    function isJuniorRole(designation) {
+      if (!designation) return false;
+      const clean = designation.trim().toUpperCase();
+      return clean.includes('S.K.S') || clean.includes('SKS') ||
+             clean.includes('K.K.S') || clean.includes('KKS');
+    }
+
     function loadLocations() {
+      const selectedDesignation = designationInput.value.trim();
+      const category = isJuniorRole(selectedDesignation) ? 'Junior' : 'General';
+      const previousSelection = locationSelect.value;
+
       locationSelect.disabled = true;
       button.disabled = true;
       button.textContent = 'Loading locations...';
@@ -263,13 +275,16 @@
             option.value = location.name;
             option.textContent = location.full
               ? location.name + ' — FULL'
-              : location.name + ' — ' +
-                location.remaining + ' places remaining';
+              : location.name + ' - ' + location.remaining + ' more vacancies remaining';
 
             option.disabled = location.full;
 
             if (!location.full) {
               availableCount++;
+            }
+
+            if (location.name === previousSelection && !location.full) {
+              option.selected = true;
             }
 
             locationSelect.appendChild(option);
@@ -284,6 +299,8 @@
               'All locations have reached their registration limits.',
               'error'
             );
+          } else {
+            statusBox.style.display = 'none';
           }
         })
         .withFailureHandler(function (error) {
@@ -304,8 +321,12 @@
           button.disabled = true;
           button.textContent = 'Locations unavailable';
         })
-        .getFormOptions();
+        .getFormOptions(category);
     }
+
+    designationInput.addEventListener('input', function () {
+      loadLocations();
+    });
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
