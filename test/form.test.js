@@ -131,13 +131,36 @@ test('getEmployeeCategory classifies Senior and Junior roles correctly', () => {
   assert.strictEqual(getEmployeeCategory('K.K.S.'), 'Junior');
 });
 
-test('getFormOptions returns 2 vacancies default for Junior category', () => {
+test('junior registration does not decrement Senior vacancies', () => {
+  const sheet = mockSpreadsheetInstance.getSheetByName('Responses');
+  sheet.rows = [];
+  setup();
+
+  // Initial Senior options
+  const initialSeniorOptions = getFormOptions('Senior');
+  const initialSeniorColombo = initialSeniorOptions.locations.find(l => l.name === 'PBCN-Colombo');
+  assert.strictEqual(initialSeniorColombo.remaining, 9);
+
+  // Submit a Junior registration
+  const juniorSubmission = {
+    employeeName: 'Junior A',
+    nic: '111111111V',
+    designation: 'S.K.S.',
+    workplace: 'Uni',
+    telephone: '0771111111',
+    preferredLocation: 'PBCN-Colombo'
+  };
+  submitForm(juniorSubmission);
+
+  // Check Junior options: should be 1 remaining out of 2
   const juniorOptions = getFormOptions('Junior');
-  assert.strictEqual(juniorOptions.category, 'Junior');
-  juniorOptions.locations.forEach(loc => {
-    assert.strictEqual(loc.capacity, 2);
-    assert.strictEqual(loc.remaining, 2);
-  });
+  const juniorColombo = juniorOptions.locations.find(l => l.name === 'PBCN-Colombo');
+  assert.strictEqual(juniorColombo.remaining, 1);
+
+  // Check Senior options: should still be 9 remaining out of 9
+  const seniorOptionsAfter = getFormOptions('Senior');
+  const seniorColomboAfter = seniorOptionsAfter.locations.find(l => l.name === 'PBCN-Colombo');
+  assert.strictEqual(seniorColomboAfter.remaining, 9);
 });
 
 test('submitForm respects Junior quota of 2 vacancies', () => {

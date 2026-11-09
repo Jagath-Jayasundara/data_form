@@ -1,7 +1,7 @@
 
 const SPREADSHEET_PROPERTY = 'EXAM_STAFF_SPREADSHEET_ID';
 
-// Default general capacities per location
+// Default general/senior capacities per location
 const LOCATION_CAPACITIES = {
   'PBCN-Colombo': 9,
   'CON-Ampara': 3,
@@ -108,7 +108,7 @@ function getFormOptions(category) {
   }
 
   return {
-    category: isJunior ? 'Junior' : 'General',
+    category: isJunior ? 'Junior' : 'Senior',
     locations: Object.entries(capacities).map(
       ([name, capacity]) => {
         let registered = 0;
@@ -117,8 +117,9 @@ function getFormOptions(category) {
             rec => rec.location === name && rec.category === 'Junior'
           ).length;
         } else {
+          // Count only Senior submissions for Senior capacity so Junior submissions don't decrease Senior vacancies
           registered = submittedRecords.filter(
-            rec => rec.location === name
+            rec => rec.location === name && rec.category !== 'Junior'
           ).length;
         }
 
@@ -237,7 +238,10 @@ function submitForm(data) {
               registered++;
             }
           } else {
-            registered++;
+            // Count only Senior submissions towards Senior capacity
+            if (rowCategory !== 'Junior') {
+              registered++;
+            }
           }
         }
       }
@@ -246,7 +250,7 @@ function submitForm(data) {
         throw new Error(
           'Sorry, ' + preferredLocation +
           ' has reached its maximum capacity of ' + capacity +
-          (isJunior ? ' staff members for the Junior quota.' : ' staff members.') +
+          (isJunior ? ' staff members for the Junior quota.' : ' staff members for the Senior quota.') +
           ' Please select another location.'
         );
       }
