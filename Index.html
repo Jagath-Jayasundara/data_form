@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 14px;
+      background: #f1f5f9;
+      font-family: Arial, sans-serif;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 28px;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #174a7e;
+      font-size: 25px;
+      line-height: 1.35;
+    }
+
+    .description {
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 7px;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      display: block;
+      width: 100%;
+      min-height: 46px;
+      padding: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #1e293b;
+      font-size: 16px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid #93c5fd;
+      border-color: #2563eb;
+    }
+
+    select:disabled {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 24px;
+      border: none;
+      border-radius: 7px;
+      background: #1756a9;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #status {
+      display: none;
+      margin-top: 18px;
+      padding: 13px;
+      border-radius: 7px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .success {
+      display: block !important;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .error {
+      display: block !important;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .required-note {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px 8px;
+      }
+
+      .container {
+        padding: 20px 16px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>Examination Staff Information Form</h1>
+
+    <p class="description">
+      Please complete this form accurately to register for examination
+      duties. Each location has a limited number of places.
+    </p>
+
+    <form id="staffForm">
+      <label for="employeeName">Employee Name *</label>
+      <input
+        id="employeeName"
+        name="employeeName"
+        type="text"
+        maxlength="150"
+        autocomplete="name"
+        required
+      >
+
+      <label for="nic">NIC Number *</label>
+      <input
+        id="nic"
+        name="nic"
+        type="text"
+        maxlength="12"
+        pattern="^([0-9]{9}[vV]|[0-9]{12})$"
+        placeholder="e.g. 123456789V or 200012345678"
+        title="Enter 9 digits followed by 'V' (old format) or 12 digits (new format)."
+        required
+      >
+
+      <label for="designation">Designation *</label>
+      <input
+        id="designation"
+        name="designation"
+        type="text"
+        maxlength="150"
+        required
+      >
+
+      <label for="workplace">Current Workplace *</label>
+      <input
+        id="workplace"
+        name="workplace"
+        type="text"
+        maxlength="200"
+        required
+      >
+
+      <label for="telephone">Telephone Number *</label>
+      <input
+        id="telephone"
+        name="telephone"
+        type="tel"
+        maxlength="30"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="e.g. 0771234567"
+        pattern="[0-9+() \-]{7,30}"
+        title="Use digits and optional +, spaces, brackets or hyphens."
+        required
+      >
+
+      <label for="preferredLocation">
+        Preferred Location for Examination Duties *
+      </label>
+
+      <select
+        id="preferredLocation"
+        name="preferredLocation"
+        required
+        disabled
+      >
+        <option value="">Loading locations...</option>
+      </select>
+
+      <button id="submitButton" type="submit" disabled>
+        Loading locations...
+      </button>
+
+      <div id="status" role="status" aria-live="polite"></div>
+
+      <p class="required-note">
+        * Required fields. Locations marked FULL have no remaining places.
+      </p>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('staffForm');
+    const button = document.getElementById('submitButton');
+    const statusBox = document.getElementById('status');
+    const locationSelect = document.getElementById('preferredLocation');
+
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = type;
+    }
+
+    function loadLocations() {
+      locationSelect.disabled = true;
+      button.disabled = true;
+      button.textContent = 'Loading locations...';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          locationSelect.replaceChildren();
+
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = 'Select your preferred location';
+          locationSelect.appendChild(placeholder);
+
+          let availableCount = 0;
+
+          result.locations.forEach(function (location) {
+            const option = document.createElement('option');
+
+            option.value = location.name;
+            option.textContent = location.full
+              ? location.name + ' — FULL'
+              : location.name + ' — ' +
+                location.remaining + ' places remaining';
+
+            option.disabled = location.full;
+
+            if (!location.full) {
+              availableCount++;
+            }
+
+            locationSelect.appendChild(option);
+          });
+
+          locationSelect.disabled = false;
+          button.disabled = false;
+          button.textContent = 'Submit Information';
+
+          if (availableCount === 0) {
+            showStatus(
+              'All locations have reached their registration limits.',
+              'error'
+            );
+          }
+        })
+        .withFailureHandler(function (error) {
+          locationSelect.replaceChildren();
+
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = 'Unable to load locations';
+          locationSelect.appendChild(option);
+
+          showStatus(
+            error && error.message
+              ? error.message
+              : 'Could not load the locations. Please refresh the page.',
+            'error'
+          );
+
+          button.disabled = true;
+          button.textContent = 'Locations unavailable';
+        })
+        .getFormOptions();
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      if (!form.reportValidity()) {
+        return;
+      }
+
+      const data = {
+        employeeName: document.getElementById('employeeName').value.trim(),
+        nic: document.getElementById('nic').value.trim(),
+        designation: document.getElementById('designation').value.trim(),
+        workplace: document.getElementById('workplace').value.trim(),
+        telephone: document.getElementById('telephone').value.trim(),
+        preferredLocation: locationSelect.value
+      };
+
+      button.disabled = true;
+      locationSelect.disabled = true;
+      button.textContent = 'Submitting...';
+      statusBox.className = '';
+      statusBox.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          showStatus(result.message, 'success');
+          form.reset();
+
+          loadLocations();
+        })
+        .withFailureHandler(function (error) {
+          showStatus(
+            error && error.message
+              ? error.message
+              : 'Submission failed. Please try again.',
+            'error'
+          );
+
+          loadLocations();
+        })
+        .submitForm(data);
+    });
+
+    loadLocations();
+  </script>
+</body>
+</html>

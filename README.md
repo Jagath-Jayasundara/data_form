@@ -1,45 +1,46 @@
-# Staff Examination Duty Form (Google Apps Script)
+# Examination Staff Information System (Google Apps Script)
 
-This project contains Google Apps Script code to automatically create a Google Form for collecting staff examination duty details.
+This project contains a Google Apps Script Web Application and Spreadsheet backend to collect information from staff members for examination-related duties with location capacity management.
 
-## Fields Collected
+## Information Collected
 1. Employee Name
-2. Designation
-3. Current Workplace
-4. Telephone Number
-5. Preferred Location for Performing Examination Duties
+2. NIC Number (Validates 9 digits followed by 'V' for old format, or 12 digits for new format)
+3. Designation
+4. Current Workplace
+5. Telephone Number
+6. Preferred Location for Performing Examination Duties
 
 ---
 
-## How to Run in Google Apps Script Editor
+## How to Set Up and Run
 
-### Option 1: Copy Code Directly to Google Apps Script Editor
+### 1. Create a Google Apps Script Project
 1. Go to [script.google.com](https://script.google.com/) and click **New project**.
-2. Replace the contents of `Code.gs` with the code in `Code.gs` from this project.
-3. Click the **Save** icon (or press `Ctrl+S` / `Cmd+S`).
-4. At the top editor bar, select the function **`createStaffExaminationForm`** from the dropdown menu.
-5. Click **Run**.
-6. When running for the first time, Google Apps Script will request permissions to manage your Google Forms:
-   - Click **Review permissions**.
-   - Choose your Google account.
-   - Click **Advanced** > **Go to Untitled project (unsafe)** (or your project name).
-   - Click **Allow**.
-7. View the **Execution log** at the bottom of the Apps Script editor to find the generated Form Edit URL and Form Published URL.
+2. Name the project (e.g. `Examination Staff Information System`).
+3. Replace the contents of `Code.gs` with the code in `Code.gs`.
+4. In the Apps Script editor, click the **+** (Add a file) button next to "Files", select **HTML**, name it `Index`, and paste the contents of `Index.html`.
+5. (Optional) In Project Settings, enable "Show 'appsscript.json' manifest file in editor" and copy `appsscript.json` if configuring OAuth scopes.
+
+### 2. Initialize the Response Spreadsheet
+1. In the Apps Script toolbar, select the **`setup`** function from the dropdown.
+2. Click **Run**.
+3. Authorize the script when prompted.
+4. Check the **Execution log** to see the URL of the automatically created Google Sheet titled `Examination Staff Information Responses`.
+
+### 3. Deploy as a Web Application
+1. Click **Deploy** > **New deployment** (top right).
+2. Click the gear icon next to "Select type" and choose **Web app**.
+3. Set the following configuration:
+   - **Description**: Examination Staff Duty Registration
+   - **Execute as**: Me (your Google account)
+   - **Who has access**: Anyone (or Anyone within your organization)
+4. Click **Deploy**.
+5. Copy the generated **Web App URL** and share it with staff members.
 
 ---
 
-### Option 2: Using `clasp` (Command Line)
-If you use Google Apps Script Command Line Tool (`clasp`):
-1. Install clasp: `npm install -g @google/clasp`
-2. Log in to your Google account: `clasp login`
-3. Push files to your project: `clasp push`
-4. Open the editor: `clasp open` and run `createStaffExaminationForm`.
-
----
-
-## Running Unit Tests Locally
-
-To run unit tests locally:
+## Testing Locally
+Run unit tests with:
 ```bash
 npm test
 ```
