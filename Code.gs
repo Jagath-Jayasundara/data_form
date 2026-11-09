@@ -40,17 +40,18 @@ function setup() {
       'Employee Name',
       'NIC Number',
       'Designation',
+      'Category',
       'Current Workplace',
       'Telephone Number',
       'Preferred Examination Duty Location'
     ]);
 
     sheet.setFrozenRows(1);
-    sheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+    sheet.getRange(1, 1, 1, 8).setFontWeight('bold');
     sheet.getRange('A:A').setNumberFormat('yyyy-mm-dd hh:mm:ss');
     sheet.getRange('C:C').setNumberFormat('@');
-    sheet.getRange('F:F').setNumberFormat('@');
-    sheet.autoResizeColumns(1, 7);
+    sheet.getRange('G:G').setNumberFormat('@');
+    sheet.autoResizeColumns(1, 8);
   }
 
   Logger.log('Response spreadsheet: ' + spreadsheet.getUrl());
@@ -82,7 +83,7 @@ function getFormOptions() {
 
   const lastRow = sheet.getLastRow();
   const submittedLocations = lastRow >= 2
-    ? sheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
+    ? sheet.getRange(2, 8, lastRow - 1, 1).getDisplayValues().flat()
     : [];
 
   return {
@@ -104,6 +105,35 @@ function getFormOptions() {
   };
 }
 
+function getEmployeeCategory(designation) {
+  if (!designation || typeof designation !== 'string') {
+    return '';
+  }
+
+  const clean = designation.trim().toUpperCase();
+
+  // Junior group consists of positions designated as S.K.S. and K.K.S.
+  const isJunior = clean.includes('S.K.S') || clean.includes('SKS') ||
+                   clean.includes('K.K.S') || clean.includes('KKS');
+
+  if (isJunior) {
+    return 'Junior';
+  }
+
+  // Senior group includes positions such as ICT Officer, Development Officer,
+  // and Public Health Management Assistants (Grades I, II, and III).
+  const isSenior = clean.includes('ICT') ||
+                   clean.includes('DEVELOPMENT OFFICER') ||
+                   clean.includes('PUBLIC HEALTH MANAGEMENT ASSISTANT') ||
+                   clean.includes('PHMA');
+
+  if (isSenior) {
+    return 'Senior';
+  }
+
+  return 'Senior'; // Default to Senior if categorized under supervisory examination staff
+}
+
 function submitForm(data) {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid form submission. Please try again.');
@@ -121,6 +151,7 @@ function submitForm(data) {
   );
 
   const normalizedNic = validateAndNormalizeNic(nic);
+  const category = getEmployeeCategory(designation);
 
   if (!Object.prototype.hasOwnProperty.call(
     LOCATION_CAPACITIES,
@@ -160,12 +191,12 @@ function submitForm(data) {
     const lastRow = sheet.getLastRow();
 
     if (lastRow >= 2) {
-      const existingValues = sheet.getRange(2, 1, lastRow - 1, 7).getDisplayValues();
+      const existingValues = sheet.getRange(2, 1, lastRow - 1, 8).getDisplayValues();
       const normalizedSubmittedPhone = normalizePhoneNumber(telephone);
 
       for (let i = 0; i < existingValues.length; i++) {
         const existingNic = (existingValues[i][2] || '').trim().toUpperCase();
-        const existingPhone = normalizePhoneNumber(existingValues[i][5] || '');
+        const existingPhone = normalizePhoneNumber(existingValues[i][6] || '');
 
         if (existingNic === normalizedNic.toUpperCase()) {
           throw new Error('An entry with this NIC number has already been submitted.');
@@ -180,7 +211,7 @@ function submitForm(data) {
     const capacity = LOCATION_CAPACITIES[preferredLocation];
 
     const registeredLocations = lastRow >= 2
-      ? sheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
+      ? sheet.getRange(2, 8, lastRow - 1, 1).getDisplayValues().flat()
       : [];
 
     const registered = registeredLocations.filter(
@@ -200,6 +231,7 @@ function submitForm(data) {
       employeeName,
       normalizedNic,
       designation,
+      category,
       workplace,
       "'" + telephone,
       preferredLocation
@@ -258,6 +290,7 @@ if (typeof module !== 'undefined' && module.exports) {
     doGet,
     getFormOptions,
     submitForm,
+    getEmployeeCategory,
     normalizePhoneNumber,
     validateAndNormalizeNic,
     cleanField

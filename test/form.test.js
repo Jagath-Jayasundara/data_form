@@ -96,12 +96,13 @@ const {
   doGet,
   getFormOptions,
   submitForm,
+  getEmployeeCategory,
   normalizePhoneNumber,
   validateAndNormalizeNic,
   cleanField
 } = require('../Code.gs');
 
-test('setup initializes spreadsheet headers correctly with NIC', () => {
+test('setup initializes spreadsheet headers correctly with Category and NIC', () => {
   const sheet = mockSpreadsheetInstance.getSheetByName('Responses');
   sheet.rows = [];
   const url = setup();
@@ -112,10 +113,25 @@ test('setup initializes spreadsheet headers correctly with NIC', () => {
     'Employee Name',
     'NIC Number',
     'Designation',
+    'Category',
     'Current Workplace',
     'Telephone Number',
     'Preferred Examination Duty Location'
   ]);
+});
+
+test('getEmployeeCategory classifies Senior and Junior roles correctly', () => {
+  assert.strictEqual(getEmployeeCategory('ICT Officer'), 'Senior');
+  assert.strictEqual(getEmployeeCategory('Development Officer'), 'Senior');
+  assert.strictEqual(getEmployeeCategory('Public Health Management Assistant - Grade I'), 'Senior');
+  assert.strictEqual(getEmployeeCategory('Public Health Management Assistant - Grade II'), 'Senior');
+  assert.strictEqual(getEmployeeCategory('Public Health Management Assistant - Grade III'), 'Senior');
+  assert.strictEqual(getEmployeeCategory('PHMA Grade I'), 'Senior');
+
+  assert.strictEqual(getEmployeeCategory('S.K.S.'), 'Junior');
+  assert.strictEqual(getEmployeeCategory('SKS'), 'Junior');
+  assert.strictEqual(getEmployeeCategory('K.K.S.'), 'Junior');
+  assert.strictEqual(getEmployeeCategory('KKS'), 'Junior');
 });
 
 test('validateAndNormalizeNic accepts valid old and new formats', () => {
@@ -148,11 +164,11 @@ test('getFormOptions returns available capacity for locations', () => {
   assert.strictEqual(colombo.full, false);
 });
 
-test('submitForm successfully registers a staff member with old NIC', () => {
+test('submitForm successfully registers a Senior staff member', () => {
   const validData = {
     employeeName: 'Jane Doe',
     nic: '851234567v',
-    designation: 'Senior Lecturer',
+    designation: 'ICT Officer',
     workplace: 'Faculty of Science',
     telephone: '0771234567',
     preferredLocation: 'CON-Ampara'
@@ -166,17 +182,18 @@ test('submitForm successfully registers a staff member with old NIC', () => {
   const lastRow = sheet.rows[sheet.rows.length - 1];
   assert.strictEqual(lastRow[1], 'Jane Doe');
   assert.strictEqual(lastRow[2], '851234567V');
-  assert.strictEqual(lastRow[3], 'Senior Lecturer');
-  assert.strictEqual(lastRow[4], 'Faculty of Science');
-  assert.strictEqual(lastRow[5], "'0771234567");
-  assert.strictEqual(lastRow[6], 'CON-Ampara');
+  assert.strictEqual(lastRow[3], 'ICT Officer');
+  assert.strictEqual(lastRow[4], 'Senior');
+  assert.strictEqual(lastRow[5], 'Faculty of Science');
+  assert.strictEqual(lastRow[6], "'0771234567");
+  assert.strictEqual(lastRow[7], 'CON-Ampara');
 });
 
-test('submitForm successfully registers a staff member with new NIC', () => {
+test('submitForm successfully registers a Junior staff member', () => {
   const validData = {
-    employeeName: 'John Smith',
+    employeeName: 'Perera',
     nic: '199512345678',
-    designation: 'Lecturer',
+    designation: 'K.K.S.',
     workplace: 'Faculty of Arts',
     telephone: '0719876543',
     preferredLocation: 'CON-Kandy'
@@ -187,19 +204,20 @@ test('submitForm successfully registers a staff member with new NIC', () => {
 
   const sheet = mockSpreadsheetInstance.getSheetByName('Responses');
   const lastRow = sheet.rows[sheet.rows.length - 1];
-  assert.strictEqual(lastRow[1], 'John Smith');
+  assert.strictEqual(lastRow[1], 'Perera');
   assert.strictEqual(lastRow[2], '199512345678');
-  assert.strictEqual(lastRow[3], 'Lecturer');
-  assert.strictEqual(lastRow[4], 'Faculty of Arts');
-  assert.strictEqual(lastRow[5], "'0719876543");
-  assert.strictEqual(lastRow[6], 'CON-Kandy');
+  assert.strictEqual(lastRow[3], 'K.K.S.');
+  assert.strictEqual(lastRow[4], 'Junior');
+  assert.strictEqual(lastRow[5], 'Faculty of Arts');
+  assert.strictEqual(lastRow[6], "'0719876543");
+  assert.strictEqual(lastRow[7], 'CON-Kandy');
 });
 
 test('submitForm prevents duplicate submission by same NIC', () => {
   const duplicateNicData = {
     employeeName: 'Jane Duplicate',
     nic: '851234567V',
-    designation: 'Lecturer',
+    designation: 'Development Officer',
     workplace: 'Science',
     telephone: '0770000000',
     preferredLocation: 'PBCN-Colombo'
@@ -215,7 +233,7 @@ test('submitForm prevents duplicate submission by same telephone number', () => 
   const duplicatePhoneData = {
     employeeName: 'Jane Duplicate Phone',
     nic: '999999999V',
-    designation: 'Lecturer',
+    designation: 'Development Officer',
     workplace: 'Science',
     telephone: '077-123-4567',
     preferredLocation: 'PBCN-Colombo'
@@ -262,13 +280,13 @@ test('submitForm validates phone number format', () => {
 test('submitForm respects capacity limits', () => {
   const sheet = mockSpreadsheetInstance.getSheetByName('Responses');
   // Fill up CON-Ratnapura (capacity 2)
-  sheet.appendRow([new Date(), 'A', '111111111V', 'Lecturer', 'Uni', "'0771111111", 'CON-Ratnapura']);
-  sheet.appendRow([new Date(), 'B', '222222222V', 'Lecturer', 'Uni', "'0772222222", 'CON-Ratnapura']);
+  sheet.appendRow([new Date(), 'A', '111111111V', 'S.K.S.', 'Junior', 'Uni', "'0771111111", 'CON-Ratnapura']);
+  sheet.appendRow([new Date(), 'B', '222222222V', 'S.K.S.', 'Junior', 'Uni', "'0772222222", 'CON-Ratnapura']);
 
   const overflowData = {
     employeeName: 'Jane New',
     nic: '851234560V',
-    designation: 'Senior Lecturer',
+    designation: 'ICT Officer',
     workplace: 'Faculty of Science',
     telephone: '0778888888',
     preferredLocation: 'CON-Ratnapura'

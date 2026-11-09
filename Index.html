@@ -168,8 +168,19 @@
         name="designation"
         type="text"
         maxlength="150"
+        list="designationList"
+        placeholder="e.g. ICT Officer, S.K.S., Development Officer"
         required
       >
+      <datalist id="designationList">
+        <option value="ICT Officer"></option>
+        <option value="Development Officer"></option>
+        <option value="Public Health Management Assistant - Grade I"></option>
+        <option value="Public Health Management Assistant - Grade II"></option>
+        <option value="Public Health Management Assistant - Grade III"></option>
+        <option value="S.K.S."></option>
+        <option value="K.K.S."></option>
+      </datalist>
 
       <label for="workplace">Current Workplace *</label>
       <input
