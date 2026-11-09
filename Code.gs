@@ -144,8 +144,8 @@ function submitForm(data) {
     );
   }
 
-  // Keep the capacity check and the new row insertion under the same lock.
-  // This helps prevent overbooking when multiple people submit together.
+  // Keep the duplicate check, capacity check, and row insertion under the same lock.
+  // This helps prevent duplicate submissions and overbooking when multiple people submit together.
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
 
@@ -157,8 +157,27 @@ function submitForm(data) {
       throw new Error('The response sheet could not be found.');
     }
 
-    const capacity = LOCATION_CAPACITIES[preferredLocation];
     const lastRow = sheet.getLastRow();
+
+    if (lastRow >= 2) {
+      const existingValues = sheet.getRange(2, 1, lastRow - 1, 7).getDisplayValues();
+      const normalizedSubmittedPhone = normalizePhoneNumber(telephone);
+
+      for (let i = 0; i < existingValues.length; i++) {
+        const existingNic = (existingValues[i][2] || '').trim().toUpperCase();
+        const existingPhone = normalizePhoneNumber(existingValues[i][5] || '');
+
+        if (existingNic === normalizedNic.toUpperCase()) {
+          throw new Error('An entry with this NIC number has already been submitted.');
+        }
+
+        if (existingPhone && normalizedSubmittedPhone && existingPhone === normalizedSubmittedPhone) {
+          throw new Error('An entry with this telephone number has already been submitted.');
+        }
+      }
+    }
+
+    const capacity = LOCATION_CAPACITIES[preferredLocation];
 
     const registeredLocations = lastRow >= 2
       ? sheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
@@ -193,6 +212,11 @@ function submitForm(data) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function normalizePhoneNumber(phone) {
+  if (!phone || typeof phone !== 'string') return '';
+  return phone.replace(/[^0-9]/g, '');
 }
 
 function validateAndNormalizeNic(nic) {
@@ -234,6 +258,7 @@ if (typeof module !== 'undefined' && module.exports) {
     doGet,
     getFormOptions,
     submitForm,
+    normalizePhoneNumber,
     validateAndNormalizeNic,
     cleanField
   };

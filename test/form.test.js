@@ -28,7 +28,7 @@ class MockSheet {
   getRange(row, col, numRows = 1, numCols = 1) {
     if (typeof row === 'number') {
       const slice = this.rows.slice(row - 1, row - 1 + numRows);
-      const values = slice.map(r => [r[col - 1]]);
+      const values = slice.map(r => r.slice(col - 1, col - 1 + numCols));
       return new MockRange(values);
     }
     return new MockRange();
@@ -96,6 +96,7 @@ const {
   doGet,
   getFormOptions,
   submitForm,
+  normalizePhoneNumber,
   validateAndNormalizeNic,
   cleanField
 } = require('../Code.gs');
@@ -128,6 +129,12 @@ test('validateAndNormalizeNic accepts valid old and new formats', () => {
   assert.throws(() => validateAndNormalizeNic('123456789X'), /valid NIC/);
   assert.throws(() => validateAndNormalizeNic('12345678901'), /valid NIC/);
   assert.throws(() => validateAndNormalizeNic('1234567890123'), /valid NIC/);
+});
+
+test('normalizePhoneNumber strips non-numeric characters', () => {
+  assert.strictEqual(normalizePhoneNumber('077-123-4567'), '0771234567');
+  assert.strictEqual(normalizePhoneNumber('+94 77 123 4567'), '94771234567');
+  assert.strictEqual(normalizePhoneNumber(''), '');
 });
 
 test('getFormOptions returns available capacity for locations', () => {
@@ -188,6 +195,38 @@ test('submitForm successfully registers a staff member with new NIC', () => {
   assert.strictEqual(lastRow[6], 'CON-Kandy');
 });
 
+test('submitForm prevents duplicate submission by same NIC', () => {
+  const duplicateNicData = {
+    employeeName: 'Jane Duplicate',
+    nic: '851234567V',
+    designation: 'Lecturer',
+    workplace: 'Science',
+    telephone: '0770000000',
+    preferredLocation: 'PBCN-Colombo'
+  };
+
+  assert.throws(
+    () => submitForm(duplicateNicData),
+    /An entry with this NIC number has already been submitted/
+  );
+});
+
+test('submitForm prevents duplicate submission by same telephone number', () => {
+  const duplicatePhoneData = {
+    employeeName: 'Jane Duplicate Phone',
+    nic: '999999999V',
+    designation: 'Lecturer',
+    workplace: 'Science',
+    telephone: '077-123-4567',
+    preferredLocation: 'PBCN-Colombo'
+  };
+
+  assert.throws(
+    () => submitForm(duplicatePhoneData),
+    /An entry with this telephone number has already been submitted/
+  );
+});
+
 test('submitForm rejects invalid NIC format', () => {
   const invalidNicData = {
     employeeName: 'Jane Doe',
@@ -227,11 +266,11 @@ test('submitForm respects capacity limits', () => {
   sheet.appendRow([new Date(), 'B', '222222222V', 'Lecturer', 'Uni', "'0772222222", 'CON-Ratnapura']);
 
   const overflowData = {
-    employeeName: 'Jane Doe',
-    nic: '851234567V',
+    employeeName: 'Jane New',
+    nic: '851234560V',
     designation: 'Senior Lecturer',
     workplace: 'Faculty of Science',
-    telephone: '0771234567',
+    telephone: '0778888888',
     preferredLocation: 'CON-Ratnapura'
   };
 
