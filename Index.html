@@ -163,24 +163,24 @@
       >
 
       <label for="designation">Designation *</label>
-      <input
+      <select
         id="designation"
         name="designation"
-        type="text"
-        maxlength="150"
-        list="designationList"
-        placeholder="e.g. ICT Officer, S.K.S., Development Officer"
         required
       >
-      <datalist id="designationList">
-        <option value="ICT Officer"></option>
-        <option value="Development Officer"></option>
-        <option value="Public Health Management Assistant - Grade I"></option>
-        <option value="Public Health Management Assistant - Grade II"></option>
-        <option value="Public Health Management Assistant - Grade III"></option>
-        <option value="S.K.S."></option>
-        <option value="K.K.S."></option>
-      </datalist>
+        <option value="">Select your designation</option>
+        <optgroup label="Senior Group">
+          <option value="ICT Officer">ICT Officer</option>
+          <option value="Development Officer">Development Officer</option>
+          <option value="Public Health Management Assistant - Grade I">Public Health Management Assistant - Grade I</option>
+          <option value="Public Health Management Assistant - Grade II">Public Health Management Assistant - Grade II</option>
+          <option value="Public Health Management Assistant - Grade III">Public Health Management Assistant - Grade III</option>
+        </optgroup>
+        <optgroup label="Junior Group">
+          <option value="S.K.S.">S.K.S.</option>
+          <option value="K.K.S.">K.K.S.</option>
+        </optgroup>
+      </select>
 
       <label for="workplace">Current Workplace *</label>
       <input
@@ -235,7 +235,7 @@
     const button = document.getElementById('submitButton');
     const statusBox = document.getElementById('status');
     const locationSelect = document.getElementById('preferredLocation');
-    const designationInput = document.getElementById('designation');
+    const designationSelect = document.getElementById('designation');
 
     function showStatus(message, type) {
       statusBox.textContent = message;
@@ -250,7 +250,7 @@
     }
 
     function loadLocations() {
-      const selectedDesignation = designationInput.value.trim();
+      const selectedDesignation = designationSelect.value.trim();
       const category = isJuniorRole(selectedDesignation) ? 'Junior' : 'General';
       const previousSelection = locationSelect.value;
 
@@ -324,7 +324,7 @@
         .getFormOptions(category);
     }
 
-    designationInput.addEventListener('input', function () {
+    designationSelect.addEventListener('change', function () {
       loadLocations();
     });
 
@@ -338,7 +338,7 @@
       const data = {
         employeeName: document.getElementById('employeeName').value.trim(),
         nic: document.getElementById('nic').value.trim(),
-        designation: document.getElementById('designation').value.trim(),
+        designation: designationSelect.value.trim(),
         workplace: document.getElementById('workplace').value.trim(),
         telephone: document.getElementById('telephone').value.trim(),
         preferredLocation: locationSelect.value
