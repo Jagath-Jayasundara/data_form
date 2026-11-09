@@ -20,22 +20,33 @@
     .container {
       max-width: 620px;
       margin: 0 auto;
-      padding: 28px;
       background: #ffffff;
       border-radius: 14px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
 
-    h1 {
-      margin-top: 0;
-      color: #174a7e;
-      font-size: 25px;
+    .header-banner {
+      background: #174a7e;
+      color: #ffffff;
+      padding: 24px 28px;
+    }
+
+    .header-banner h1 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 24px;
       line-height: 1.35;
+    }
+
+    .content-body {
+      padding: 24px 28px 28px;
     }
 
     .description {
       color: #475569;
       line-height: 1.6;
+      margin-top: 0;
       margin-bottom: 24px;
     }
 
@@ -119,12 +130,16 @@
         padding: 12px 8px;
       }
 
-      .container {
+      .header-banner {
         padding: 20px 16px;
       }
 
-      h1 {
-        font-size: 22px;
+      .content-body {
+        padding: 18px 16px 20px;
+      }
+
+      .header-banner h1 {
+        font-size: 21px;
       }
     }
   </style>
@@ -132,102 +147,106 @@
 
 <body>
   <main class="container">
-    <h1>Examination Staff Information Form</h1>
+    <header class="header-banner">
+      <h1>Examination Staff Information Form</h1>
+    </header>
 
-    <p class="description">
-      Please complete this form accurately to register for examination
-      duties. Each location has a limited number of places.
-    </p>
-
-    <form id="staffForm">
-      <label for="employeeName">Employee Name *</label>
-      <input
-        id="employeeName"
-        name="employeeName"
-        type="text"
-        maxlength="150"
-        autocomplete="name"
-        required
-      >
-
-      <label for="nic">NIC Number *</label>
-      <input
-        id="nic"
-        name="nic"
-        type="text"
-        maxlength="12"
-        pattern="^([0-9]{9}[vV]|[0-9]{12})$"
-        placeholder="e.g. 123456789V or 200012345678"
-        title="Enter 9 digits followed by 'V' (old format) or 12 digits (new format)."
-        required
-      >
-
-      <label for="designation">Designation *</label>
-      <select
-        id="designation"
-        name="designation"
-        required
-      >
-        <option value="">Select your designation</option>
-        <optgroup label="Senior Group">
-          <option value="ICT Officer">ICT Officer</option>
-          <option value="Development Officer">Development Officer</option>
-          <option value="Public Health Management Assistant - Grade I">Public Health Management Assistant - Grade I</option>
-          <option value="Public Health Management Assistant - Grade II">Public Health Management Assistant - Grade II</option>
-          <option value="Public Health Management Assistant - Grade III">Public Health Management Assistant - Grade III</option>
-        </optgroup>
-        <optgroup label="Junior Group">
-          <option value="S.K.S.">S.K.S.</option>
-          <option value="K.K.S.">K.K.S.</option>
-        </optgroup>
-      </select>
-
-      <label for="workplace">Current Workplace *</label>
-      <input
-        id="workplace"
-        name="workplace"
-        type="text"
-        maxlength="200"
-        required
-      >
-
-      <label for="telephone">Telephone Number *</label>
-      <input
-        id="telephone"
-        name="telephone"
-        type="tel"
-        maxlength="30"
-        inputmode="tel"
-        autocomplete="tel"
-        placeholder="e.g. 0771234567"
-        pattern="[0-9+() \-]{7,30}"
-        title="Use digits and optional +, spaces, brackets or hyphens."
-        required
-      >
-
-      <label for="preferredLocation">
-        Preferred Location for Examination Duties *
-      </label>
-
-      <select
-        id="preferredLocation"
-        name="preferredLocation"
-        required
-        disabled
-      >
-        <option value="">Loading locations...</option>
-      </select>
-
-      <button id="submitButton" type="submit" disabled>
-        Loading locations...
-      </button>
-
-      <div id="status" role="status" aria-live="polite"></div>
-
-      <p class="required-note">
-        * Required fields. Locations marked FULL have no remaining places.
+    <div class="content-body">
+      <p class="description">
+        Please complete this form accurately to register for examination
+        duties. Each location has a limited number of places.
       </p>
-    </form>
+
+      <form id="staffForm">
+        <label for="employeeName">Employee Name *</label>
+        <input
+          id="employeeName"
+          name="employeeName"
+          type="text"
+          maxlength="150"
+          autocomplete="name"
+          required
+        >
+
+        <label for="nic">NIC Number *</label>
+        <input
+          id="nic"
+          name="nic"
+          type="text"
+          maxlength="12"
+          pattern="^([0-9]{9}[vV]|[0-9]{12})$"
+          placeholder="e.g. 123456789V or 200012345678"
+          title="Enter 9 digits followed by 'V' (old format) or 12 digits (new format)."
+          required
+        >
+
+        <label for="designation">Designation *</label>
+        <select
+          id="designation"
+          name="designation"
+          required
+        >
+          <option value="">Select your designation</option>
+          <optgroup label="Senior Group">
+            <option value="ICT Officer">ICT Officer</option>
+            <option value="Development Officer">Development Officer</option>
+            <option value="Public Health Management Assistant - Grade I">Public Health Management Assistant - Grade I</option>
+            <option value="Public Health Management Assistant - Grade II">Public Health Management Assistant - Grade II</option>
+            <option value="Public Health Management Assistant - Grade III">Public Health Management Assistant - Grade III</option>
+          </optgroup>
+          <optgroup label="Junior Group">
+            <option value="S.K.S.">S.K.S.</option>
+            <option value="K.K.S.">K.K.S.</option>
+          </optgroup>
+        </select>
+
+        <label for="workplace">Current Workplace *</label>
+        <input
+          id="workplace"
+          name="workplace"
+          type="text"
+          maxlength="200"
+          required
+        >
+
+        <label for="telephone">Telephone Number *</label>
+        <input
+          id="telephone"
+          name="telephone"
+          type="tel"
+          maxlength="30"
+          inputmode="tel"
+          autocomplete="tel"
+          placeholder="e.g. 0771234567"
+          pattern="[0-9+() \-]{7,30}"
+          title="Use digits and optional +, spaces, brackets or hyphens."
+          required
+        >
+
+        <label for="preferredLocation">
+          Preferred Location for Examination Duties *
+        </label>
+
+        <select
+          id="preferredLocation"
+          name="preferredLocation"
+          required
+          disabled
+        >
+          <option value="">Loading locations...</option>
+        </select>
+
+        <button id="submitButton" type="submit" disabled>
+          Loading locations...
+        </button>
+
+        <div id="status" role="status" aria-live="polite"></div>
+
+        <p class="required-note">
+          * Required fields. Locations marked FULL have no remaining places.
+        </p>
+      </form>
+    </div>
   </main>
 
   <script>
